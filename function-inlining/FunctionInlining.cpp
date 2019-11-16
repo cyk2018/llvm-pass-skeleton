@@ -9,9 +9,9 @@
 using namespace llvm;
 
 namespace {
-struct SkeletonPass : public FunctionPass {
+struct FunctionInliningPass : public FunctionPass {
   static char ID;
-  SkeletonPass() : FunctionPass(ID) {}
+  FunctionInliningPass() : FunctionPass(ID) {}
 
   virtual bool runOnFunction(Function &F) {
     for (auto &B : F) {
@@ -26,9 +26,9 @@ struct SkeletonPass : public FunctionPass {
             errs() << "<> INLINE SUCCESSFUL B)\n";
           else
             errs() << "<> INLINE failed >:(\n";
-					break;
+          break;
         }
-				errs() << "\n";
+        errs() << "\n";
       }
     }
     return false;
@@ -36,7 +36,7 @@ struct SkeletonPass : public FunctionPass {
 };
 }  // namespace
 
-char SkeletonPass::ID = 0;
+char FunctionInliningPass::ID = 0;
 
 // Register the pass so `opt -skeleton` runs it.
-static RegisterPass<SkeletonPass> X("skeleton", "a useless pass");
+static RegisterPass<FunctionInliningPass> X("function-inlining", "a useful pass");

@@ -1,2 +1,2 @@
 clang -S -emit-llvm -Xclang -disable-O0-optnone test.cpp
-opt -load build/skeleton/libSkeletonPass.* -skeleton -S test.ll -o test_opt.ll
+/usr/local/opt/llvm/bin/opt -load build/function-inlining/libFunctionInliningPass.* -function-inlining -S test.ll -o test_opt.ll
