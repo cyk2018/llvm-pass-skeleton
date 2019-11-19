@@ -1,3 +1,4 @@
+
 #include <vector>
 #include "llvm/Analysis/InlineCost.h"
 #include "llvm/IR/Function.h"
@@ -11,7 +12,7 @@
 using namespace llvm;
 
 namespace {
-const int INLINE_THRESHOLD = 1000;
+const int INLINE_THRESHOLD = 10;
 const int NUM_RUNS = 1;
 struct FunctionInliningPass : public FunctionPass {
   static char ID;
@@ -47,3 +48,4 @@ char FunctionInliningPass::ID = 0;
 // Register the pass so `opt -function-inlining` runs it.
 static RegisterPass<FunctionInliningPass> X("function-inlining",
                                             "a useful pass");
+
