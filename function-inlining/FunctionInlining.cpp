@@ -12,8 +12,8 @@
 using namespace llvm;
 
 namespace {
-const int INLINE_THRESHOLD = 10;
-const int NUM_RUNS = 1;
+const int INLINE_THRESHOLD = 1000;
+const int NUM_RUNS = 3;
 struct FunctionInliningPass : public FunctionPass {
   static char ID;
   FunctionInliningPass() : FunctionPass(ID) {}
