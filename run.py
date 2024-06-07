@@ -2,6 +2,7 @@ import os
 import subprocess
 
 program = lambda num_runs, threshold: f'''
+
 #include <vector>
 #include "llvm/Analysis/InlineCost.h"
 #include "llvm/IR/Function.h"
@@ -10,13 +11,12 @@ program = lambda num_runs, threshold: f'''
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 using namespace llvm;
 
 namespace {{
-const int INLINE_THRESHOLD = {threshold};
-const int NUM_RUNS = {num_runs};
+const int INLINE_THRESHOLD = threshold;
+const int NUM_RUNS = num_runs;
 struct FunctionInliningPass : public FunctionPass {{
   static char ID;
   FunctionInliningPass() : FunctionPass(ID) {{}}
@@ -32,10 +32,11 @@ struct FunctionInliningPass : public FunctionPass {{
         CallInst *call = dyn_cast<CallInst>(I);
         if (call != nullptr) {{
           Function *fun = call->getCalledFunction();
-          if (fun != nullptr && isInlineViable(*fun) &&
+          if (fun != nullptr && isInlineViable(*fun).isSuccess() &&
               fun->getInstructionCount() <= INLINE_THRESHOLD) {{
             InlineFunctionInfo info;
-            InlineFunction(call, info);
+            auto call_base = dyn_cast<CallBase>(call);
+            InlineFunction(*call_base, info);
             modified = true;
           }}
         }}
@@ -51,6 +52,8 @@ char FunctionInliningPass::ID = 0;
 // Register the pass so `opt -function-inlining` runs it.
 static RegisterPass<FunctionInliningPass> X("function-inlining",
                                             "a useful pass");
+
+
 
 '''
 
