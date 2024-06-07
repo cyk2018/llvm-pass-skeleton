@@ -7,7 +7,6 @@
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 using namespace llvm;
 
@@ -29,10 +28,11 @@ struct FunctionInliningPass : public FunctionPass {
         CallInst *call = dyn_cast<CallInst>(I);
         if (call != nullptr) {
           Function *fun = call->getCalledFunction();
-          if (fun != nullptr && isInlineViable(*fun) &&
+          if (fun != nullptr && isInlineViable(*fun).isSuccess() &&
               fun->getInstructionCount() <= INLINE_THRESHOLD) {
             InlineFunctionInfo info;
-            InlineFunction(call, info);
+            auto call_base = dyn_cast<CallBase>(call);
+            InlineFunction(*call_base, info);
             modified = true;
           }
         }
