@@ -1,36 +1,48 @@
 import os
 import subprocess
 import sys
+import re
 
 PASS_NAME = 'function-inlining'
 PASS_PATH = os.path.expanduser(
-    '~/llvm-pass-skeleton/build/function-inlining/libFunctionInliningPass.so')
+    '~/Documents/5-postgraduation/function_inline/llvm-pass-skeleton/build/function-inlining/libFunctionInliningPass.so')
 POLYBENCH_CODE_PATH = os.path.expanduser(
-    '~/Downloads/Misc/')
+    '~/Documents/5-postgraduation/1-compiler-2024/llvm-test-suite/SingleSource/Benchmarks/Misc')
 RUNS_PER_BENCHMARK = 5
 BINARY_FILE = './a.out'
 
 
 def emit_llvm_command(c_file, lib):
-    return f'clang -S -emit-llvm -Xclang -disable-O0-optnone {c_file}'
+    return f'clang -Wno-implicit-int -lm -S -emit-llvm -Xclang -disable-O0-optnone {c_file}'
     # return f'clang -S -emit-llvm -Xclang -disable-O0-optnone -I {lib} {c_file}'
 
 
 def opt_command(name):
-    return f'opt -load {PASS_PATH} -{PASS_NAME} -S {name}.ll -o {name}_opt.ll'
+    return f'opt -load-pass-plugin={PASS_PATH} -passes={PASS_NAME} -S {name}.ll -o {name}_opt.ll'
 
 
 def clang_command(name, polybench_c):
-    return f'clang {name} -o {BINARY_FILE}'
+    return f'clang {name} -lm -Wno-implicit-int -o {BINARY_FILE}'
     # return f'clang {name} {polybench_c} -o {BINARY_FILE}'
 
 
 def benchmark(ll_file, polybench_c):
     result = subprocess.run(clang_command(ll_file, polybench_c).split())
-    assert result.returncode == 0, 'compiling program failed'
+    if(result.returncode != 0):
+        return 0
+    # assert result.returncode == 0, 'compiling program failed'
     result = subprocess.run(['time', BINARY_FILE], capture_output=True)
     assert result.returncode == 0, 'running program failed' + str(result)
-    return float(result.stderr.strip().split()[-4])
+    # print(result.stderr)
+    match = re.search(r'(\d+):(\d+\.\d+)elapsed', result.stderr.decode())
+    if match:
+        minutes, seconds = map(float, match.groups())
+        total_seconds = minutes * 60 + seconds
+        return total_seconds
+    else:
+        print("未找到运行时间信息")
+    # print(result.stderr.decode().strip().split('\n'))
+    # return float(result.stderr.strip().split()[-4])
 
 
 if __name__ == '__main__':

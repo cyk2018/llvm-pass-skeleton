@@ -3,25 +3,31 @@ import subprocess
 
 program = lambda num_runs, threshold: f'''
 
+
 #include <vector>
 #include "llvm/Analysis/InlineCost.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instructions.h"
-#include "llvm/IR/LegacyPassManager.h"
+#include "llvm/IR/PassManager.h"
+#include "llvm/Passes/PassBuilder.h"
+#include "llvm/Passes/PassPlugin.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/Cloning.h"
-using namespace llvm;
+// using namespace llvm;
 
-namespace {{
-const int INLINE_THRESHOLD = threshold;
-const int NUM_RUNS = num_runs;
-struct FunctionInliningPass : public FunctionPass {{
-  static char ID;
-  FunctionInliningPass() : FunctionPass(ID) {{}}
+namespace llvm{{
+const int INLINE_THRESHOLD = {threshold};
+const int NUM_RUNS = {num_runs};
 
-  virtual bool runOnFunction(Function &F) {{
+class FunctionInliningPass : public PassInfoMixin<FunctionInliningPass> {{
+
+ public:
+  // static char ID;
+
+
+  PreservedAnalyses run(Function& F, FunctionAnalysisManager& AM) {{
     bool modified = false;
     for (int i = 0; i < NUM_RUNS; ++i) {{
       std::vector<Instruction *> worklist;
@@ -42,17 +48,55 @@ struct FunctionInliningPass : public FunctionPass {{
         }}
       }}
     }}
-    return modified;
+    return PreservedAnalyses::all();
   }}
+
 }};
+
 }}  // namespace
 
-char FunctionInliningPass::ID = 0;
+// char FunctionInliningPass::ID = 0;
 
 // Register the pass so `opt -function-inlining` runs it.
-static RegisterPass<FunctionInliningPass> X("function-inlining",
-                                            "a useful pass");
+// static RegisterPass<FunctionInliningPass> X("function-inlining",
+//                                             "a useful pass");
 
+// Register the pass
+
+extern "C" ::llvm::PassPluginLibraryInfo LLVM_ATTRIBUTE_WEAK
+llvmGetPassPluginInfo() {{
+
+  return {{
+
+    LLVM_PLUGIN_API_VERSION, "function-inlining", "v0.1",
+
+    [](llvm::PassBuilder &PB) {{
+
+      PB.registerPipelineParsingCallback(
+
+        [](llvm::StringRef Name, llvm::FunctionPassManager &FPM,
+
+           llvm::ArrayRef<llvm::PassBuilder::PipelineElement>) {{
+
+          if(Name == "function-inlining"){{
+
+            FPM.addPass(llvm::FunctionInliningPass());
+
+            return true;
+
+          }}
+
+          return false;
+
+        }}
+
+      );
+
+    }}
+
+  }};
+
+}}
 
 
 '''
