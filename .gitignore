@@ -1,3 +1,6 @@
 build
 .vscode/
 *.ll
+*.csv
+*.out
+*.exe
